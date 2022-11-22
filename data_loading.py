@@ -14,7 +14,7 @@ def permutate_image_pixels(image, permutation):
     else:
         c, h, w = image.size()
         image = image.view(c, -1)
-        image = image[:, permutation]  #--> same permutation for each channel
+        image = image[:, permutation[1]]  #--> same permutation for each channel
         image = image.view(c, h, w)
         return image
 
