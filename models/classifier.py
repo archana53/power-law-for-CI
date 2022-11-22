@@ -138,13 +138,6 @@ class Classifier(ContinualLearner, MemoryBuffer):
         if self.fcE.frozen:
             self.fcE.eval()
 
-        # Reset optimizer
-        self.optimizer.zero_grad()
-
-        # Should gradient be computed separately for each context? (needed when a context-mask is combined with replay)
-        gradient_per_context = True if ((self.mask_dict is not None) and (x_ is not None)) else False
-
-
         ##--(1)-- REPLAYED DATA --##
 
         if x_ is not None:

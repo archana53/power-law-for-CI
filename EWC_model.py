@@ -2,24 +2,29 @@ import abc
 import numpy as np
 import torch
 from torch import nn
+from torch import optim
 from torch.nn import functional as F
 from models.fc.layers import fc_layer
 from models.fc.nets import MLP
 from models.conv.nets import ConvLayers
 from models.utils import loss_functions as lf, modules
 from models.utils.ncl import additive_nearest_kf
+from torch.utils.data import DataLoader,TensorDataset
+from tqdm import tqdm
 
 
 class EWCModel(nn.Module, metaclass=abc.ABCMeta):
 
     def __init__(self):
         super().__init__()
-
         # List with the methods to create generators that return the parameters on which to apply param regularization
         self.param_list = [self.named_parameters]  #-> lists the parameters to regularize with SI or diagonal Fisher
                                                    #   (default is to apply it to all parameters of the network)
         # Optimizer (and whether it needs to be reset)
-        self.optimizer = None
+        optim_list = [{'params': filter(lambda p: p.requires_grad, self.parameters()),
+                                        'lr': 1e-3}]
+
+        self.optimizer = optim.Adam(optim_list, betas=(0.9, 0.999))
         self.optim_type = "adam"
         #--> self.[optim_type]   <str> name of optimizer, relevant if optimizer should be reset for every context
         self.optim_list = []
@@ -27,7 +32,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
 
 
         # Parameter-regularization
-        self.weight_penalty = False
+        self.weight_penalty = True
         self.reg_strength = 0       #-> hyperparam: how strong to weigh the weight penalty ("regularisation strength")
         self.precondition = False
         self.alpha = 1e-10          #-> small constant to stabilize inversion of the Fisher Information Matrix
@@ -53,6 +58,13 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
 
         self.offline = False        #-> use separate penalty term per context (as in original EWC paper)
         self.gamma = 1.             #-> decay-term for old contexts' contribution to cummulative FI (as in 'Online EWC')
+
+
+    def _device(self):
+        return next(self.parameters()).device
+
+    def _is_on_cuda(self):
+        return next(self.parameters()).is_cuda
 
 
     def initialize_fisher(self):
@@ -83,12 +95,13 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         mode = self.training
         self.eval()
 
+        print("fisher estimation start")
         # Create data-loader to give batches of size 1 (unless specifically asked to do otherwise)
-        data_loader = get_data_loader(dataset, batch_size=1 if self.fisher_batch==1 else self.fisher_batch,
-                                      cuda=self._is_on_cuda())
+
+        data_loader = DataLoader(dataset, batch_size=1 if self.fisher_batch==1 else self.fisher_batch)
 
         # Estimate the FI-matrix for [self.fisher_n] batches of size 1
-        for index,(x,y) in enumerate(data_loader):
+        for index,(x,y) in enumerate(tqdm(data_loader, desc = 'Fisher Estimation')):
             # break from for-loop if max number of samples has been reached
             if self.fisher_n is not None:
                 if index >= self.fisher_n:
@@ -234,7 +247,7 @@ class Classifier(EWCModel):
         self.conv_out_channels = self.convE.out_channels
         #------------------------------------------------------------------------------------------#
         #--> fully connected hidden layers
-        self.fcE = MLP(input_size=self.conv_out_units, output_size=fc_units, layers=fc_layers-1,
+        self.fcE = MLP(input_size=image_size ,output_size=fc_units, layers=fc_layers-1,
                        hid_size=fc_units, drop=fc_drop, batch_norm=fc_bn, nl=fc_nl, bias=bias,
                        excitability=excitability, excit_buffer=excit_buffer, gated=fc_gated, phantom=phantom)
         mlp_output_size = fc_units if fc_layers>1 else self.conv_out_units
@@ -319,8 +332,8 @@ class Classifier(EWCModel):
             self.fcE.eval()
 
         # Reset optimizer
-        self.optimizer.zero_grad()
         ##--(2)-- CURRENT DATA --##
+        loss_total  = 0
 
         if x is not None:
             # Run model
@@ -329,10 +342,9 @@ class Classifier(EWCModel):
 
             # Weigh losses
             loss_cur = predL
-
+            loss_total += loss_cur
             # Calculate training-accuracy
             accuracy = None if y is None else (y == y_hat.max(1)[1]).sum().item() / x.size(0)
-
         ##--(3)-- PARAMETER REGULARIZATION LOSSES --##
 
         # Add a parameter regularization penalty to the loss function
@@ -419,10 +431,6 @@ class Classifier(EWCModel):
         return {
             'loss_total': loss_total.item(),
             'loss_current': loss_cur.item() if x is not None else 0,
-            'loss_replay': loss_replay.item() if (loss_replay is not None) and (x is not None) else 0,
-            'pred': predL.item() if predL is not None else 0,
-            'pred_r': sum(predL_r).item()/n_replays if (x_ is not None and predL_r[0] is not None) else 0,
-            'distil_r': sum(distilL_r).item()/n_replays if (x_ is not None and distilL_r[0] is not None) else 0,
             'param_reg': weight_penalty_loss.item() if weight_penalty_loss is not None else 0,
-            'accuracy': accuracy if accuracy is not None else 0.,
+            'accuracy': accuracy if accuracy is not None else 0
         }
