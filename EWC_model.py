@@ -22,7 +22,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
                                                    #   (default is to apply it to all parameters of the network)
         # Optimizer (and whether it needs to be reset)
         optim_list = [{'params': filter(lambda p: p.requires_grad, self.parameters()),
-                                        'lr': 1e-3}]
+                                        'lr': 1}]
 
         self.optimizer = optim.Adam(optim_list, betas=(0.9, 0.999))
         self.optim_type = "adam"
@@ -226,7 +226,6 @@ class Classifier(EWCModel):
         self.depth = depth
         self.fc_layers = fc_layers
         self.fc_drop = fc_drop
-        self.phantom = phantom
 
         # check whether there is at least 1 fc-layer
         if fc_layers<1:
@@ -248,16 +247,16 @@ class Classifier(EWCModel):
         #------------------------------------------------------------------------------------------#
         #--> fully connected hidden layers
         self.fcE = MLP(input_size=image_size ,output_size=fc_units, layers=fc_layers-1,
-                       hid_size=fc_units, drop=fc_drop, batch_norm=fc_bn, nl=fc_nl, bias=bias,
+                       hid_size=fc_units, drop=fc_drop, batch_norm=fc_bn, nl='sigmoid', bias=bias,
                        excitability=excitability, excit_buffer=excit_buffer, gated=fc_gated, phantom=phantom)
         mlp_output_size = fc_units if fc_layers>1 else self.conv_out_units
         #--> classifier
-        self.classifier = fc_layer(mlp_output_size, classes, excit_buffer=True, nl='none', drop=fc_drop,
-                                   phantom=phantom)
+        self.classifier = fc_layer(mlp_output_size, classes, excit_buffer=True, nl='none', drop=fc_drop)
 
         # Flags whether parts of the network are frozen (so they can be set to evaluation mode during training)
         self.convE.frozen = False
         self.fcE.frozen = False
+        print(self.list_init_layers())
 
 
     def list_init_layers(self):

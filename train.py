@@ -22,12 +22,15 @@ def train(model, train_loader, iters, loss_cbs=list(), eval_cbs=list()):
     iteration = epoch = 0
     for it in tqdm(range(iters), desc = 'Iterations'):
         # Loop over all batches of an epoch
+        acc = []
         for batch_idx, (data, y) in enumerate(train_loader):
             # Perform training-step on this batch
             data, y = data.to(device), y.to(device)
             loss_dict = model.train_a_batch(data, y=y)
-    return loss_dict
-
+            y_hat = model(data)
+            acc.append((y == y_hat.max(1)[1]).sum().item() / data.size(0))
+        if it %100 == 0:
+            print('accuracy for iteration ',it, ' :', np.mean(acc))
 def train_cl(model, train_datasets, iters=2000, batch_size=32, baseline='none',
              loss_cbs=list(), eval_cbs=list(), sample_cbs=list(), context_cbs=list(),
              generator=None, gen_iters=0, gen_loss_cbs=list(), **kwargs):
@@ -66,7 +69,6 @@ def train_cl(model, train_datasets, iters=2000, batch_size=32, baseline='none',
         train_dataset, batch_size=batch_size, shuffle=True)
         
         train(model, dataloader, iters, loss_cbs = loss_cbs, eval_cbs=eval_cbs)
-        print("context training done")
         ##----------> UPON FINISHING EACH CONTEXT...
 
         # Parameter regularization: update and compute the parameter importance estimates
@@ -79,8 +81,6 @@ def train_cl(model, train_datasets, iters=2000, batch_size=32, baseline='none',
                     model.estimate_kfac_fisher(train_dataset, allowed_classes=allowed_classes)
                 else:
                     model.estimate_fisher(train_dataset, allowed_classes=allowed_classes)
-
-        print("fisher estimation is happening")
 
         # Run the callbacks after finishing each context
         for context_cb in context_cbs:
