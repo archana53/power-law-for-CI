@@ -1,8 +1,8 @@
+import numpy as np
 from torchvision import datasets,transforms
 from torch.utils.data import Dataset
-import numpy as np
+from config import PERMUTATIONS,TASK_CONFIGURATIONS
 
-config = {'size': 32, 'channels': 1, 'classes': 10}
 
 def permutate_image_pixels(image, permutation):
     '''Permutate the pixels of an image according to [permutation].
