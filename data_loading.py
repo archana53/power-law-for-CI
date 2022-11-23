@@ -59,23 +59,5 @@ def permute_train_test_data(mnist_trainset, mnist_testset) :
 
         return train_datasets, test_datasets
 
-def no_permute_train_test_data(mnist_trainset, mnist_testset) :
-        # get train and test datasets
-        # generate pixel-permutations
-        permutations = [np.arange(32*32)]
-        # specify transformed datasets per context
-        train_datasets = []
-        test_datasets = []
-        for perm in enumerate(permutations):
-            target_transform = None
-            train_datasets.append(TransformedDataset(
-                mnist_trainset, transform=transforms.Lambda(lambda x, p=perm: permutate_image_pixels(x, p)),
-                target_transform=target_transform
-            ))
-            test_datasets.append(TransformedDataset(
-                mnist_testset, transform=transforms.Lambda(lambda x, p=perm: permutate_image_pixels(x, p)),
-                target_transform=target_transform
-            ))
 
-        return train_datasets, test_datasets
 

@@ -21,10 +21,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         self.param_list = [self.named_parameters]  #-> lists the parameters to regularize with SI or diagonal Fisher
                                                    #   (default is to apply it to all parameters of the network)
         # Optimizer (and whether it needs to be reset)
-        optim_list = [{'params': filter(lambda p: p.requires_grad, self.parameters()),
-                                        'lr': 1}]
-
-        self.optimizer = optim.Adam(optim_list, betas=(0.9, 0.999))
+        
         self.optim_type = "adam"
         #--> self.[optim_type]   <str> name of optimizer, relevant if optimizer should be reset for every context
         self.optim_list = []
@@ -72,7 +69,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         for gen_params in self.param_list:
             for n, p in gen_params():
                 if p.requires_grad:
-                    n = n.replace('.', '__')
+                    n = n.replace('.', '__') 
                     # -take initial parameters as zero for regularization purposes
                     self.register_buffer('{}_EWC_prev_context'.format(n), p.detach().clone()*0)
                     # -precision (approximated by diagonal Fisher Information matrix)
@@ -256,6 +253,10 @@ class Classifier(EWCModel):
         # Flags whether parts of the network are frozen (so they can be set to evaluation mode during training)
         self.convE.frozen = False
         self.fcE.frozen = False
+
+        optim_list = [{'params': list(filter(lambda p: p.requires_grad, self.parameters())),
+                                        'lr': 1e-3}]
+        self.optimizer = optim.Adam(optim_list, betas=(0.9, 0.999))
         print(self.list_init_layers())
 
 
