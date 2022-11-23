@@ -244,7 +244,7 @@ class Classifier(EWCModel):
         #------------------------------------------------------------------------------------------#
         #--> fully connected hidden layers
         self.fcE = MLP(input_size=image_size ,output_size=fc_units, layers=fc_layers-1,
-                       hid_size=fc_units, drop=fc_drop, batch_norm=fc_bn, nl='sigmoid', bias=bias,
+                       hid_size=fc_units, drop=fc_drop, batch_norm=fc_bn, nl=fc_nl, bias=bias,
                        excitability=excitability, excit_buffer=excit_buffer, gated=fc_gated, phantom=phantom)
         mlp_output_size = fc_units if fc_layers>1 else self.conv_out_units
         #--> classifier
@@ -257,7 +257,6 @@ class Classifier(EWCModel):
         optim_list = [{'params': list(filter(lambda p: p.requires_grad, self.parameters())),
                                         'lr': 1e-3}]
         self.optimizer = optim.Adam(optim_list, betas=(0.9, 0.999))
-        print(self.list_init_layers())
 
 
     def list_init_layers(self):

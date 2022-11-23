@@ -70,9 +70,7 @@ class MLP(nn.Module):
             layer = fc_layer(
                 in_size, out_size, bias=bias, excitability=excitability, excit_buffer=excit_buffer,
                 batch_norm=False if (lay_id==self.layers and not output=="normal") else batch_norm, gated=gated,
-                nl=("none" if output=="none" else nn.Sigmoid()) if (
-                    lay_id==self.layers and not output=="normal"
-                ) else nl, drop=drop if lay_id>1 else 0., phantom=phantom
+                nl=nl, drop=drop if lay_id>1 else 0., phantom=phantom
             )
             setattr(self, 'fcLayer{}'.format(lay_id), layer)
 
