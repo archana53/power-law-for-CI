@@ -220,12 +220,9 @@ def get_all_training_environments():
   # NUM_PHASES = NUM_TASKS
   num_ele_to_pick = phase_task_freq_count[0,0] # to select only new task uniformly 
   for phase in range(NUM_TASKS): 
-      phase_training = []
       selected_indices = np.random.choice([*range(int(MAX_TASK_EXAMPLES)+1)], int(num_ele_to_pick), replace=False)
-      new_task = phase # only new task for each phase
-      task_subset = torch.utils.data.Subset(training_permutations[new_task], selected_indices)
-      phase_training.append(task_subset)
-      final_phase_dataset = ConcatDataset(phase_training)
+      task_subset = torch.utils.data.Subset(training_permutations[phase], selected_indices)
+      final_phase_dataset = ConcatDataset(task_subset)
       SGD_training_environments.append(final_phase_dataset)
 
 
@@ -247,19 +244,18 @@ def get_all_training_environments():
   MAX_TASK_EXAMPLES = 60000
   num_ele_to_pick = phase_task_freq_count[0,0]
   # NUM_PHASES = NUM_TASKS
-  for phase in range(1): # only 1 phase is enough for upper baseline
-      phase_training = []
-      for task in range(NUM_TASKS):
-          selected_indices = np.random.choice([*range(int(MAX_TASK_EXAMPLES)+1)], int(num_ele_to_pick), replace=False)
-          task_subset = torch.utils.data.Subset(training_permutations[task], selected_indices)
-          phase_training.append(task_subset)
-      final_phase_dataset = ConcatDataset(phase_training)
-      UBL_training_environments.append(final_phase_dataset)
+  phase_training = []
+  for phase in range(NUM_TASKS): # only 1 phase is enough for upper baseline
+        selected_indices = np.random.choice([*range(int(MAX_TASK_EXAMPLES)+1)], int(num_ele_to_pick), replace=False)
+        task_subset = torch.utils.data.Subset(training_permutations[task], selected_indices)
+        phase_training.append(task_subset)
+        final_phase_dataset = ConcatDataset(phase_training)
+        UBL_training_environments.append(final_phase_dataset)
 
 
   # In[32]:
 
-
+  print('archana')
   print(len(UBL_training_environments))
   for i in range(len(UBL_training_environments)):
     print("Training environment size for task ", i , "is :", len(UBL_training_environments[i-1]))
