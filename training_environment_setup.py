@@ -7,32 +7,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import tensorflow as tf
 from sklearn import metrics
 get_ipython().run_line_magic('matplotlib', 'inline')
-
-
-# ## Get Dataset
-
-# In[2]:
-
-
-import tensorflow_datasets as tfds
-from tensorflow.keras.datasets import mnist
-
-
-# # Training Environment
-
-# In[3]:
-
-
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train = x_train/255.0
-x_test = x_test/255.0
-
-
-# In[4]:
 
 
 from torchvision import datasets,transforms
@@ -288,4 +264,4 @@ def get_all_training_environments():
   for i in range(len(UBL_training_environments)):
     print("Training environment size for task ", i , "is :", len(UBL_training_environments[i-1]))
 
-  return training_environments, SGD_training_environments, UBL_training_environments
+  return training_environments, SGD_training_environments, UBL_training_environments, test_permutations

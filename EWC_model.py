@@ -31,7 +31,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         # Parameter-regularization
         self.weight_penalty = True
         self.reg_strength = 0       #-> hyperparam: how strong to weigh the weight penalty ("regularisation strength")
-        self.precondition = False
+        self.precondition = True
         self.alpha = 1e-10          #-> small constant to stabilize inversion of the Fisher Information Matrix
                                     #   (this is used as hyperparameter in OWM)
         self.importance_weighting = 'fisher'  #-> Options for estimation of parameter importance:
