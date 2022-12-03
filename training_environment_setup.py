@@ -62,7 +62,9 @@ class TransformedDataset(Dataset):
 def permute_train_test_data(mnist_trainset, mnist_testset) :
         # get train and test datasets
         # generate pixel-permutations
+        np.random.seed(10)
         permutations = [np.random.permutation(32**2) for _ in range(10)]
+        print(permutations)
         # specify transformed datasets per context
         train_datasets = []
         test_datasets = []
@@ -135,7 +137,7 @@ def get_all_training_environments():
   MIN_TASK_EXAMPLES = 1195
   NUM_TASKS = 10
 
-  DOWNSAMPLE = 6
+  DOWNSAMPLE = 1
   power_law_sampling[:] = [x//DOWNSAMPLE for x in power_law_sampling]
   MAX_TASK_EXAMPLES//=DOWNSAMPLE
   MIN_TASK_EXAMPLES//=DOWNSAMPLE
@@ -194,7 +196,7 @@ def get_all_training_environments():
       phase_training = []
       for task in range(NUM_TASKS):
           num_ele_to_pick = phase_task_freq_count[task,phase]
-          selected_indices = np.random.choice([*range(int(MAX_TASK_EXAMPLES)+1)], int(num_ele_to_pick), replace=False)
+          selected_indices = np.random.choice(np.arange(MAX_TASK_EXAMPLES), int(num_ele_to_pick), replace=False)
           task_subset = torch.utils.data.Subset(training_permutations[task], selected_indices)
           phase_training.append(task_subset)
       final_phase_dataset = ConcatDataset(phase_training)
@@ -212,18 +214,12 @@ def get_all_training_environments():
   # ### SGD (Lower Baseline) Training Environment
 
   # In[25]:
-
-
   SGD_training_environments = []
-  np.random.seed(10)
-  MAX_TASK_EXAMPLES = 60000
-  # NUM_PHASES = NUM_TASKS
-  num_ele_to_pick = phase_task_freq_count[0,0] # to select only new task uniformly 
-  for phase in range(NUM_TASKS): 
-      selected_indices = np.random.choice([*range(int(MAX_TASK_EXAMPLES)+1)], int(num_ele_to_pick), replace=False)
-      task_subset = torch.utils.data.Subset(training_permutations[phase], selected_indices)
-      final_phase_dataset = ConcatDataset(task_subset)
-      SGD_training_environments.append(final_phase_dataset)
+  num_ele_to_pick = phase_task_freq_count[0,0]
+  for i in range(NUM_TASKS):
+    selected_indices = np.random.choice(np.arange(MAX_TASK_EXAMPLES), int(num_ele_to_pick), replace=False)
+    task_subset = torch.utils.data.Subset(training_permutations[i], selected_indices)
+    SGD_training_environments.append(task_subset)
 
 
   # In[26]:
@@ -246,18 +242,16 @@ def get_all_training_environments():
   # NUM_PHASES = NUM_TASKS
   phase_training = []
   for phase in range(NUM_TASKS): # only 1 phase is enough for upper baseline
-        selected_indices = np.random.choice([*range(int(MAX_TASK_EXAMPLES)+1)], int(num_ele_to_pick), replace=False)
-        task_subset = torch.utils.data.Subset(training_permutations[task], selected_indices)
+        selected_indices = np.random.choice(np.arange(MAX_TASK_EXAMPLES), int(num_ele_to_pick), replace=False)
+        task_subset = torch.utils.data.Subset(training_permutations[phase], selected_indices)
         phase_training.append(task_subset)
         final_phase_dataset = ConcatDataset(phase_training)
         UBL_training_environments.append(final_phase_dataset)
 
 
-  # In[32]:
 
-  print('archana')
   print(len(UBL_training_environments))
-  for i in range(len(UBL_training_environments)):
+  for i in range(1,len(UBL_training_environments)+1):
     print("Training environment size for task ", i , "is :", len(UBL_training_environments[i-1]))
 
   return training_environments, SGD_training_environments, UBL_training_environments, test_permutations

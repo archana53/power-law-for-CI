@@ -256,6 +256,7 @@ class Classifier(ContinualLearner, MemoryBuffer):
 
             # Calculate training-accuracy
             accuracy = None if y is None else (y == y_hat.max(1)[1]).sum().item() / x.size(0)
+            print(accuracy)
         else:
             accuracy = predL = None
             # -> it's possible there is only "replay" [i.e., for offline with incremental context learning]
