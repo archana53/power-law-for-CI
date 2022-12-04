@@ -9,7 +9,7 @@ import time
 import copy
 
 
-def train(model, train_loader, iters, loss_cbs=list(), eval_cbs=list()):
+def train(model, train_loader, iters, loss_cbs=list(), eval_cbs=list(), patience=5):
     '''Train a model with a "train_a_batch" method for [iters] iterations on data from [train_loader].
     [model]             model to optimize
     [train_loader]      <dataloader> for training [model] on
@@ -22,6 +22,8 @@ def train(model, train_loader, iters, loss_cbs=list(), eval_cbs=list()):
     iteration = epoch = 0
     acc = []
     loss = []
+    prevLoss = 100
+    lossCounter = 0      # For Early Stopping
     for it in tqdm(range(iters), desc = 'Iterations'):
         # Loop over all batches of an epoch
         
@@ -37,11 +39,23 @@ def train(model, train_loader, iters, loss_cbs=list(), eval_cbs=list()):
         loss.append(loss_dict['loss_current'])
         if it %100 == 0:
             print('accuracy for iteration ',it, ' :', np.mean(acc))
+        
+        # Early stopping
+        currLoss = loss_dict['loss_current']
+        if currLoss > prevLoss:
+            lossCounter += 1
+            if lossCounter >= patience:
+                print('Early stopping!')
+                return acc, loss
+        else:
+            lossCounter = 0
+        prevLoss = currLoss
 
     return acc, loss
+
 def train_cl(model, train_datasets, test_datasets, iters=2000, batch_size=32, baseline='none',
              loss_cbs=list(), eval_cbs=list(), sample_cbs=list(), context_cbs=list(),
-             generator=None, gen_iters=0, gen_loss_cbs=list(), continue_from_context = 1, training_environment = 'none', **kwargs):
+             generator=None, gen_iters=0, gen_loss_cbs=list(), continue_from_context = 1, training_environment = 'none', patience=5, **kwargs):
     '''Train a model (with a "train_a_batch" method) on multiple contexts.
     [model]               <nn.Module> main model to optimize across all contexts
     [train_datasets]      <list> with for each context the training <DataSet>
@@ -66,7 +80,7 @@ def train_cl(model, train_datasets, test_datasets, iters=2000, batch_size=32, ba
         print('length of dataset is ',len(dataloader.dataset))
         print(len(dataloader))
 
-        acc, loss = train(model, dataloader, iters, loss_cbs = loss_cbs, eval_cbs=eval_cbs)
+        acc, loss = train(model, dataloader, iters, loss_cbs = loss_cbs, eval_cbs=eval_cbs, patience=patience)
         PATH = f'./checkpoint/model_{training_environment}_context{context}.pt'
         torch.save({
             'model_state_dict': model.state_dict(),
