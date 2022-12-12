@@ -8,8 +8,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
-from sklearn.model_selection import train_test_split
-
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
@@ -66,22 +64,14 @@ def permute_train_test_data(mnist_trainset, mnist_testset) :
         # generate pixel-permutations
         np.random.seed(10)
         permutations = [np.random.permutation(32**2) for _ in range(10)]
-        # print(permutations)
+        print(permutations)
         # specify transformed datasets per context
         train_datasets = []
-        val_datasets = []
         test_datasets = []
         for perm in enumerate(permutations):
             target_transform = None
-            train_size = len(list(mnist_trainset))
-            val_size = 0.20*train_size
-            # mnist_train, mnist_val = torch.split(mnist_trainset, [(train_size-val_size), val_size])
-            train_datasets.append(TransformedDataset(list(mnist_trainset)[:int(train_size-val_size)]
-                , transform=transforms.Lambda(lambda x, p=perm: permutate_image_pixels(x, p)),
-                target_transform=target_transform
-            ))
-            val_datasets.append(TransformedDataset(list(mnist_trainset)[int(train_size-val_size):]
-                , transform=transforms.Lambda(lambda x, p=perm: permutate_image_pixels(x, p)),
+            train_datasets.append(TransformedDataset(
+                mnist_trainset, transform=transforms.Lambda(lambda x, p=perm: permutate_image_pixels(x, p)),
                 target_transform=target_transform
             ))
             test_datasets.append(TransformedDataset(
@@ -89,7 +79,7 @@ def permute_train_test_data(mnist_trainset, mnist_testset) :
                 target_transform=target_transform
             ))
 
-        return train_datasets, val_datasets, test_datasets
+        return train_datasets, test_datasets
 
 
 from torch.utils.data import ConcatDataset
@@ -113,7 +103,7 @@ def get_all_training_environments():
   # In[8]:
 
 
-  training_permutations , val_permutations, test_permutations = permute_train_test_data((mnist_trainset),
+  training_permutations , test_permutations = permute_train_test_data((mnist_trainset),
                                                                       (mnist_testset))
 
 
@@ -264,4 +254,4 @@ def get_all_training_environments():
   for i in range(1,len(UBL_training_environments)+1):
     print("Training environment size for task ", i , "is :", len(UBL_training_environments[i-1]))
 
-  return training_environments, SGD_training_environments, UBL_training_environments, val_permutations, test_permutations
+  return training_environments, SGD_training_environments, UBL_training_environments, test_permutations

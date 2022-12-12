@@ -21,7 +21,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         self.param_list = [self.named_parameters]  #-> lists the parameters to regularize with SI or diagonal Fisher
                                                    #   (default is to apply it to all parameters of the network)
         # Optimizer (and whether it needs to be reset)
-        
+        print('EWC model initialising')
         self.optim_type = "adam"
         #--> self.[optim_type]   <str> name of optimizer, relevant if optimizer should be reset for every context
         self.optim_list = []
@@ -30,8 +30,8 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
 
         # Parameter-regularization
         self.weight_penalty = True
-        self.reg_strength = 0       #-> hyperparam: how strong to weigh the weight penalty ("regularisation strength")
-        self.precondition = True
+        self.reg_strength = 500       #-> hyperparam: how strong to weigh the weight penalty ("regularisation strength")
+        self.precondition = False
         self.alpha = 1e-10          #-> small constant to stabilize inversion of the Fisher Information Matrix
                                     #   (this is used as hyperparameter in OWM)
         self.importance_weighting = 'fisher'  #-> Options for estimation of parameter importance:
@@ -52,8 +52,8 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         self.data_size = None       #-> inverse prior (can be set to # samples per context, or used as hyperparameter)
 
 
-
-        self.offline = False        #-> use separate penalty term per context (as in original EWC paper)
+        self.online = False
+        self.offline = True        #-> use separate penalty term per context (as in original EWC paper)
         self.gamma = 1.             #-> decay-term for old contexts' contribution to cummulative FI (as in 'Online EWC')
 
 
@@ -331,6 +331,7 @@ class Classifier(EWCModel):
             self.fcE.eval()
 
         # Reset optimizer
+        self.optimizer.zero_grad()
         ##--(2)-- CURRENT DATA --##
         loss_total  = 0
 
