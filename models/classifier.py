@@ -139,6 +139,8 @@ class Classifier(ContinualLearner, MemoryBuffer):
             self.fcE.eval()
 
         ##--(1)-- REPLAYED DATA --##
+        # Reset optimizer
+        self.optimizer.zero_grad()
 
         if x_ is not None:
             # If there are different predictions per context, [y_] or [scores_] are lists and [x_] must be evaluated

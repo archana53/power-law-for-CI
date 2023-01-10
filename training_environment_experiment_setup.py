@@ -273,57 +273,8 @@ def get_all_experimental_training_environments(new_task_cnt,
       training_environments.append(final_phase_dataset)
 
 
-  # In[18]:
-
-
   print(len(training_environments))
   for i in range(1,NUM_TASKS+1):
     print("Training environment size for task ", i , "is :", len(training_environments[i-1]))
 
-
-  # ### SGD (Lower Baseline) Training Environment
-
-  # In[25]:
-  SGD_training_environments = []
-  num_ele_to_pick = phase_task_freq_count[0,0]
-  for i in range(NUM_TASKS):
-    selected_indices = np.random.choice(np.arange(MAX_TASK_EXAMPLES), int(num_ele_to_pick), replace=False)
-    task_subset = torch.utils.data.Subset(training_permutations[i], selected_indices)
-    SGD_training_environments.append(task_subset)
-
-
-  # In[26]:
-
-
-  print(len(SGD_training_environments))
-  for i in range(1,NUM_TASKS+1):
-    print("Training environment size for task ", i , "is :", len(SGD_training_environments[i-1]))
-
-
-  # ### Upper Baseline Training Environment
-
-  # In[27]:
-
-
-  UBL_training_environments = []
-  np.random.seed(10)
-  MAX_TASK_EXAMPLES = 60000
-  num_ele_to_pick = phase_task_freq_count[0,0]
-  # NUM_PHASES = NUM_TASKS
-  phase_training = []
-  for phase in range(NUM_TASKS): # only 1 phase is enough for upper baseline
-        selected_indices = np.random.choice(np.arange(MAX_TASK_EXAMPLES), int(num_ele_to_pick), replace=False)
-        task_subset = torch.utils.data.Subset(training_permutations[phase], selected_indices)
-        phase_training.append(task_subset)
-        final_phase_dataset = ConcatDataset(phase_training)
-        UBL_training_environments.append(final_phase_dataset)
-
-
-
-  print(len(UBL_training_environments))
-  for i in range(1,len(UBL_training_environments)+1):
-    print("Training environment size for task ", i , "is :", len(UBL_training_environments[i-1]))
-
-  return training_environments, SGD_training_environments, UBL_training_environments, test_permutations
-
-# get_all_training_environments()
+  return training_environments, test_permutations

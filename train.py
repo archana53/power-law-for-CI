@@ -27,11 +27,8 @@ def train(model, train_loader, iters, loss_cbs=list(), eval_cbs=list()):
         
         for batch_idx, (data, y) in enumerate(train_loader):
             # Perform training-step on this batch
-            print(batch_idx,data.size(0))
             data, y = data.to(device), y.to(device)
             loss_dict = model.train_a_batch(data, y=y)
-            print('batch training done')
-            print(data)
             y_hat = model(data)
         acc.append((y == y_hat.max(1)[1]).sum().item() / data.size(0))
         loss.append(loss_dict['loss_current'])
@@ -62,10 +59,6 @@ def train_cl(model, train_datasets, test_datasets, iters=2000, batch_size=32, ba
     # Loop over all contexts.
     for context, train_dataset in enumerate(tqdm(train_datasets, desc = 'context'), 1):
         dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,drop_last=True)
-        print(batch_size)
-        print('length of dataset is ',len(dataloader.dataset))
-        print(len(dataloader))
-
         acc, loss = train(model, dataloader, iters, loss_cbs = loss_cbs, eval_cbs=eval_cbs)
         PATH = f'./checkpoint/model_{training_environment}_context{context}.pt'
         torch.save({

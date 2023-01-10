@@ -31,7 +31,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         # Parameter-regularization
         self.weight_penalty = True
         self.reg_strength = 0       #-> hyperparam: how strong to weigh the weight penalty ("regularisation strength")
-        self.precondition = True
+        self.precondition = False
         self.alpha = 1e-10          #-> small constant to stabilize inversion of the Fisher Information Matrix
                                     #   (this is used as hyperparameter in OWM)
         self.importance_weighting = 'fisher'  #-> Options for estimation of parameter importance:
@@ -52,7 +52,7 @@ class EWCModel(nn.Module, metaclass=abc.ABCMeta):
         self.data_size = None       #-> inverse prior (can be set to # samples per context, or used as hyperparameter)
 
 
-
+        self.online = False
         self.offline = False        #-> use separate penalty term per context (as in original EWC paper)
         self.gamma = 1.             #-> decay-term for old contexts' contribution to cummulative FI (as in 'Online EWC')
 
@@ -330,7 +330,10 @@ class Classifier(EWCModel):
         if self.fcE.frozen:
             self.fcE.eval()
 
+
         # Reset optimizer
+        self.optimizer.zero_grad()
+
         ##--(2)-- CURRENT DATA --##
         loss_total  = 0
 
