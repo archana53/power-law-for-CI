@@ -74,13 +74,57 @@ def get_phase_task_frequency_matrix(
                                     MIN_EPISODE_SAMPLES,
                                     NUM_TASKS,
                                     hyperparameters):
+
+  replay_cnt = math.floor(MAX_EPISODE_SAMPLES*replay_fraction) 
+  phase_task_frequency_matrix = np.diag(np.repeat(MAX_EPISODE_SAMPLES, NUM_TASKS))
+
+  #Replay independent distributions
+  if replay_distribution == "lower_baseline" or replay_distribution =="EWC" :
+    return phase_task_frequency_matrix
+  if replay_distribution == "upper_baseline" :
+        for i in range(1, NUM_TASKS):
+            for j in range(i):
+                phase_task_frequency_matrix[j,i] = MAX_EPISODE_SAMPLES
+        return phase_task_frequency_matrix
+  if replay_distribution == "powerlaw_unrestricted" :
+    power_law_sampling = [57927,
+                          44078,
+                          33969,
+                          26483,
+                          20867,
+                          16603,
+                          13329,
+                          10790,
+                          8802,
+                          7232,
+                          5981,
+                          4978,
+                          4167,
+                          3508,
+                          2968,
+                          2523,
+                          2155,
+                          1849,
+                          1592,
+                          1377,
+                          1195]
+    freq_vector = []
+    for idx in range(0,20,2):
+      freq_vector.append(power_law_sampling[idx])
+    phase_task_freq_count = np.zeros((NUM_TASKS,NUM_TASKS)) 
+    for row in range(NUM_TASKS):
+        phase_task_freq_count[row,:]+=freq_vector
+        freq_vector.insert(0, 0)
+        freq_vector.pop()
+    return phase_task_freq_count
+
+  #Replayed Distributions
   if replay_fraction <= 0 or replay_fraction > 1:
     print("Invalid replay fraction: "+str(replay_fraction))
     return None
-  replay_cnt = math.floor(MAX_EPISODE_SAMPLES*replay_fraction) 
-  phase_task_frequency_matrix = np.diag(np.repeat(MAX_EPISODE_SAMPLES, NUM_TASKS))
+
   if replay_distribution == "uniform":
-    for i in range(1, NUM_TASKS):
+    for i in range(1, NUM_TASKS): 
       task_freq = replay_cnt//i
       for j in range(i):
         phase_task_frequency_matrix[j,i]+=task_freq
@@ -143,7 +187,7 @@ def get_phase_task_frequency_matrix(
     return None
 
 
-def get_training_environment(  replay_fraction,
+def get_training_environment(replay_fraction,
                                     replay_distribution,
                                     MAX_EPISODE_SAMPLES, 
                                     MIN_EPISODE_SAMPLES,
