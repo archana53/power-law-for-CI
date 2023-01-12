@@ -61,7 +61,7 @@ if distribution in BASELINE_DISTRIBUTIONS:
 
 else:
     for r in replay_values:
-        train_env , test = get_training_environment(replay_fraction = r, replay_distribution = distribution, MAX_EPISODE_SAMPLES = MAX_TASK_EXAMPLES, MIN_EPISODE_SAMPLES = MIN_TASK_EXAMPLES, NUM_TASKS =  NUM_TASKS, hyperparameters={"alpha": 5, "beta": 1})
+        train_env , test = get_training_environment(replay_fraction = r, replay_distribution = distribution, MAX_EPISODE_SAMPLES = MAX_TASK_EXAMPLES, MIN_EPISODE_SAMPLES = MIN_TASK_EXAMPLES, NUM_TASKS =  NUM_TASKS, seed= seed, hyperparameters={"alpha": 5, "beta": 1})
         train_cl(model, train_datasets = train_env, test_datasets = test, iters=100, batch_size=2048, continue_from_context = 1, training_environment=distribution+"_seed = " + seed + "_r = "+str(r))   
 
      
