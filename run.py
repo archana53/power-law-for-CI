@@ -1,10 +1,4 @@
-import torch
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
 from environments import get_training_environment
-import matplotlib.pyplot as plt
-import numpy as np
 from EWC_model import *
 from train import *
 import sys

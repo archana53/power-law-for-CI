@@ -1,9 +1,5 @@
 import math
 import numpy as np
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn import metrics
 import torch
 from torchvision import datasets,transforms
 from torch.utils.data import Dataset
@@ -75,11 +71,10 @@ def get_phase_task_frequency_matrix(
                                     NUM_TASKS,
                                     hyperparameters):
 
-  replay_cnt = math.floor(MAX_EPISODE_SAMPLES*replay_fraction) 
   phase_task_frequency_matrix = np.diag(np.repeat(MAX_EPISODE_SAMPLES, NUM_TASKS))
 
   #Replay independent distributions
-  if replay_distribution == "lower_baseline" or replay_distribution =="EWC" :
+  if replay_distribution == "lower_baseline" or replay_distribution == "EWC" :
     return phase_task_frequency_matrix
   if replay_distribution == "upper_baseline" :
         for i in range(1, NUM_TASKS):
@@ -119,6 +114,7 @@ def get_phase_task_frequency_matrix(
     return phase_task_freq_count
 
   #Replayed Distributions
+  replay_cnt = math.floor(MAX_EPISODE_SAMPLES*replay_fraction) 
   if replay_fraction <= 0 or replay_fraction > 1:
     print("Invalid replay fraction: "+str(replay_fraction))
     return None
@@ -193,7 +189,7 @@ def get_training_environment(replay_fraction,
                                     MIN_EPISODE_SAMPLES,
                                     NUM_TASKS,
                                     seed,
-                                    hyperparameters):
+                                    hyperparameters = {"alpha": 5, "beta": 1}):
   dataset_tranforms = transforms.Compose([
           transforms.Pad(2),
           transforms.ToTensor(),
