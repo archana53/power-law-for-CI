@@ -218,3 +218,12 @@ def get_training_environment(replay_fraction,
       training_environments.append(final_phase_dataset)
 
   return training_environments, test_permutations
+
+
+def get_test_permutations(seed):
+  mnist_testset = datasets.MNIST(root='./data', train=False, download=True, transform=dataset_tranforms)
+  _ , test_permutations = permute_train_test_data((np.zeros((1,32**2))),
+                                                                    (mnist_testset), seed)
+  return test_permutations
+                                                                  
+                                                      
